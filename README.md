@@ -35,6 +35,7 @@ OmniServe aims to revolutionize large-scale LLM serving by unifying and optimizi
 
 
 - [Reference](#reference)
+- [Team](#team)
 - [Related Projects](#related-projects)
 - [Acknowledgement](#acknowledgement)
 
@@ -424,7 +425,6 @@ If you find OmniServe/QServe/LServe useful or relevant to your research and work
 }
 ```
 
-<!--
 ## Team
 The OmniServe serving library is maintained by the following research team:
 
@@ -439,7 +439,7 @@ The OmniServe serving library is maintained by the following research team:
 - [Zhijian Liu](https://zhijianliu.com), advisor, University of California San Diego and NVIDIA;
 - [Yao Lu](https://scholar.google.com/citations?user=OI7zFmwAAAAJ&hl=en), advisor, NVIDIA;
 - [Chuang Gan](https://people.csail.mit.edu/ganchuang), advisor, UMass Amherst and MIT-IBM Watson AI Lab;
-- [Song Han](https://songhan.mit.edu), advisor, MIT EECS and NVIDIA. -->
+- [Song Han](https://songhan.mit.edu), advisor, MIT EECS and NVIDIA.
 
 ## Related Projects
 
