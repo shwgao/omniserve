@@ -407,15 +407,6 @@ Benchmarking setting: We evaluate the decoding throughput across different seque
 If you find OmniServe/QServe/LServe useful or relevant to your research and work, please kindly cite our paper:
 
 ```
-@article{yang2025lserve,
-  title={LServe: Efficient Long-sequence LLM Serving with Unified Sparse Attention},
-  author={Yang*, Shang and Guo*, Junxian and Tang, Haotian and Hu, Qinghao and Xiao, Guangxuan and Tang, Jiaming and Lin, Yujun and Liu, Zhijian and Lu, Yao and Han, Song},
-  journal={arXiv preprint arXiv:2502.14866},
-  year={2025}
-}
-```
-
-```
 @article{lin2024qserve,
   title={QServe: W4A8KV4 Quantization and System Co-design for Efficient LLM Serving},
   author={Lin*, Yujun and Tang*, Haotian and Yang*, Shang and Zhang, Zhekai and Xiao, Guangxuan and Gan, Chuang and Han, Song},
@@ -424,13 +415,22 @@ If you find OmniServe/QServe/LServe useful or relevant to your research and work
 }
 ```
 
-## Team
+```
+@article{yang2025lserve,
+  title={LServe: Efficient Long-sequence LLM Serving with Unified Sparse Attention},
+  author={Yang*, Shang and Guo*, Junxian and Tang, Haotian and Hu, Qinghao and Xiao, Guangxuan and Tang, Jiaming and Lin, Yujun and Liu, Zhijian and Lu, Yao and Han, Song},
+  journal={arXiv preprint arXiv:2502.14866},
+  year={2025}
+}
+```
 
+<!--
+## Team
 The OmniServe serving library is maintained by the following research team:
 
-- [Shang Yang](https://ys-2020.github.io), QServe and LServe system lead, MIT EECS; 
-- [Haotian Tang](http://kentang.net), QServe system lead, LServe mentor, MIT EECS;
-- [Junxian Guo](https://scholar.google.com/citations?user=3P6kczsAAAAJ&hl=zh-CN), LServe system lead, SJTU and MIT EECS; 
+- [Shang Yang*](https://ys-2020.github.io), QServe and LServe system lead, MIT EECS; 
+- [Haotian Tang*](http://kentang.net), QServe system lead, LServe mentor, MIT EECS;
+- [Junxian Guo*](https://scholar.google.com/citations?user=3P6kczsAAAAJ&hl=zh-CN), LServe system lead, SJTU and MIT EECS; 
 - [Yujun Lin](https://yujunlin.com), QServe quantization algorithm lead, MIT EECS;
 - [Qinghao Hu](https://tonyhao.xyz/), system evaluation, MIT EECS;
 - [Zhekai Zhang](https://hanlab.mit.edu/team/zhekai-zhang), system evaluation, MIT EECS;
@@ -439,7 +439,7 @@ The OmniServe serving library is maintained by the following research team:
 - [Zhijian Liu](https://zhijianliu.com), advisor, University of California San Diego and NVIDIA;
 - [Yao Lu](https://scholar.google.com/citations?user=OI7zFmwAAAAJ&hl=en), advisor, NVIDIA;
 - [Chuang Gan](https://people.csail.mit.edu/ganchuang), advisor, UMass Amherst and MIT-IBM Watson AI Lab;
-- [Song Han](https://songhan.mit.edu), advisor, MIT EECS and NVIDIA.
+- [Song Han](https://songhan.mit.edu), advisor, MIT EECS and NVIDIA. -->
 
 ## Related Projects
 
