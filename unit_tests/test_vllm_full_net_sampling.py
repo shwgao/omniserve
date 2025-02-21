@@ -1,13 +1,13 @@
 import argparse
 from typing import List, Tuple
 
-from qserve import EngineArgs, LLMEngine, SamplingParams, RequestOutput
-from qserve.modeling.models.llama_w8a8_unpad import LlamaForCausalLM
-from qserve.modeling.layers.quantized_linear import (
+from omniserve import EngineArgs, LLMEngine, SamplingParams, RequestOutput
+from omniserve.modeling.models.llama_w8a8_unpad import LlamaForCausalLM
+from omniserve.modeling.layers.quantized_linear import (
     W8A8OF16LinearDynamicInputScale,
 )
-from qserve.modeling.layers.layernorm import RMSNormGeneral
-from qserve_backend import fused_kernels
+from omniserve.modeling.layers.layernorm import RMSNormGeneral
+from omniserve_backend import fused_kernels
 import numpy as np
 import torch
 from torch import nn
@@ -21,11 +21,11 @@ except ImportError:
 import transformers
 from transformers import AutoConfig, AutoTokenizer
 
-from qserve.utils.input_metadata import InputMetadata
-import qserve.utils.constants
-import qserve_backend.fused_attention as fused_attention
+from omniserve.utils.input_metadata import InputMetadata
+import omniserve.utils.constants
+import omniserve_backend.fused_attention as fused_attention
 
-max_seq_len = qserve.utils.constants.max_seq_len
+max_seq_len = omniserve.utils.constants.max_seq_len
 model_config = AutoConfig.from_pretrained("/data/llm/checkpoints/vicuna-hf/vicuna-7b")
 
 

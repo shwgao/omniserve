@@ -1,7 +1,7 @@
 import os
 import torch
 import argparse
-from qserve.modeling.layers.quantized_linear import W4A8OF16LinearDynamicInputScale, W8A8OF16LinearDynamicInputScale
+from omniserve.modeling.layers.quantized_linear import W4A8OF16LinearDynamicInputScale, W8A8OF16LinearDynamicInputScale
 from quant_utils import get_blocks, get_named_linears, scale_activations, set_op_by_name
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig, modeling_utils
 from tqdm import tqdm
@@ -55,6 +55,11 @@ if __name__ == "__main__":
         type=str,
         default="cuda",
     )
+    parser.add_argument(
+        "--kv-per-tensor",
+        action="store_true",
+        help="save the KV scaling factors in the model checkpoint",
+    )
 
     args = parser.parse_args()
     assert args.model_type.lower() in [
@@ -72,6 +77,8 @@ if __name__ == "__main__":
 
     fake_quant_ckpt = torch.load(args.quant_path+'/model.pt', map_location=args.device)
     quant_params = torch.load(args.quant_path+'/scale.pt', map_location=args.device)
+    if args.kv_per_tensor:
+        calib_acts = torch.load(args.quant_path+'/acts.pt', map_location=args.device)
 
     w_bit = args.w_bit
     q_config = {"zero_point": True, "q_group_size": args.group_size}
@@ -117,19 +124,41 @@ if __name__ == "__main__":
         if "_proj" in key:
             pass
         else:
-            if "emb" in key:
-                print(key)
-                print(fake_quant_ckpt[key].data)
             param.data = fake_quant_ckpt[key].data
 
-    torch.save(model.state_dict(), f"{args.output_path}/quant_model.pt")
+    model_state_dict = model.state_dict()
+
+    # print(calib_acts)   
+    # exit()
+    # Add KV scaling factors to the model ckpt.
+    if args.kv_per_tensor:
+        for key, param in model.named_parameters():
+            if "post_attention_layernorm.weight" in key:    # Each layer has one post_attention_layernorm
+                kv_scale_key = key.replace("post_attention_layernorm.weight", "self_attn.kv_scale_quant_orig")
+                k_rd_key = key.replace("post_attention_layernorm.weight", "self_attn.k_rotary_emb.output")
+                v_rd_key = key.replace("post_attention_layernorm.weight", "self_attn.v_proj.output")
+                
+                try:    # lmquant v0.0.0 format
+                    k_max = calib_acts[k_rd_key]['dynamic_range.0.max'].item()
+                    v_max = calib_acts[v_rd_key]['dynamic_range.0.max'].item()
+                except: # deep compressor format
+                    k_max = calib_acts[k_rd_key]['dynamic_range'][0]['max'].item()
+                    v_max = calib_acts[v_rd_key]['dynamic_range'][0]['max'].item()
+
+                k_scale_quant_orig = k_max / 127.0
+                v_scale_quant_orig = v_max / 127.0
+
+                model_state_dict[kv_scale_key] = torch.tensor([k_scale_quant_orig, v_scale_quant_orig]).to(param.device)      # Add dummy kv scaling factors
+
+    torch.save(model_state_dict, f"{args.output_path}/quant_model.pt")
 
     # Organize checkpoint and config files
     model_name = args.model_path.rstrip("/").split("/")[-1]
     model_name = model_name + f"-w{args.w_bit}a8-per-channel" if args.group_size == -1 else model_name + f"-w{args.w_bit}a8-g{args.group_size}"
+    model_name = model_name + "-kv-per-tensor" if args.kv_per_tensor else model_name
+    os.system(f"mkdir -p {args.output_path}")
     os.system(f"mkdir -p {args.output_path}/{model_name}")
     os.system(f"mv {args.output_path}/quant_model.pt {args.output_path}/{model_name}/pytorch_model.bin")
     os.system(f"scp {args.model_path}/*.json {args.output_path}/{model_name}")
     os.system(f"scp {args.model_path}/tokenizer.model {args.output_path}/{model_name}")
     os.system(f"rm -f {args.output_path}/{model_name}/pytorch_model.bin.index.json")
-
