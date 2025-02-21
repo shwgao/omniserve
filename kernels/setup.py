@@ -31,7 +31,7 @@ NVCC_FLAGS = [
     "--expt-relaxed-constexpr",
     "--expt-extended-lambda",
     "--use_fast_math",
-    "--threads=8",
+    "--threads=32",
 ]
 
 ABI = 1 if torch._C._GLIBCXX_USE_CXX11_ABI else 0
@@ -148,31 +148,119 @@ for capability in compute_capabilities:
 
 # Use NVCC threads to parallelize the build.
 if nvcc_cuda_version >= Version("11.2"):
-    num_threads = min(os.cpu_count(), 8)
+    num_threads = min(os.cpu_count(), 32)
     NVCC_FLAGS += ["--threads", str(num_threads)]
 
 ext_modules = []
 
-
-# attention from fastertransformer
-fused_attention_extension = CUDAExtension(
-    name="qserve_backend.fused_attention",
+fused_attention_extension_fine_grained_dense = CUDAExtension(
+    name="omniserve_backend.fused_attention_fine_grained_dense",
     sources=[
-        "csrc/fused_attention/fused_attention.cpp",
-        "csrc/fused_attention/decoderMaskedMultiheadAttention.cu",
-        "csrc/fused_attention/update_kv_cache.cu",
-        "csrc/fused_attention/input_metadata_helper.cu"
+        "csrc/fused_attention/fused_attention_fine_grained/dense_attention/fused_attention.cpp",
+        "csrc/fused_attention/fused_attention_fine_grained/dense_attention/decoderMaskedMultiheadAttention.cu",
+        "csrc/fused_attention/fused_attention_fine_grained/fine_grained_common/update_kv_cache.cu",
+        "csrc/fused_attention/common/input_metadata_helper.cu"
     ],
     extra_compile_args={
         "cxx": CXX_FLAGS,
         "nvcc": NVCC_FLAGS,
     },
 )
-ext_modules.append(fused_attention_extension)
+ext_modules.append(fused_attention_extension_fine_grained_dense)
+
+fused_attention_extension_fine_grained_sparse = CUDAExtension(
+    name="omniserve_backend.fused_attention_fine_grained_sparse",
+    sources=[
+        "csrc/fused_attention/fused_attention_fine_grained/sparse_attention/fused_attention.cpp",
+        "csrc/fused_attention/fused_attention_fine_grained/sparse_attention/decoderMaskedMultiheadAttention.cu",
+        "csrc/fused_attention/fused_attention_fine_grained/fine_grained_common/update_kv_cache.cu",
+        "csrc/fused_attention/common/input_metadata_helper.cu"
+    ],
+    extra_compile_args={
+        "cxx": CXX_FLAGS,
+        "nvcc": NVCC_FLAGS,
+    },
+)
+ext_modules.append(fused_attention_extension_fine_grained_sparse)
+
+
+fused_attention_extension_per_tensor_dense = CUDAExtension(
+    name="omniserve_backend.fused_attention_per_tensor_dense",
+    sources=[
+        "csrc/fused_attention/fused_attention_per_tensor/dense_attention/fused_attention.cpp",
+        "csrc/fused_attention/fused_attention_per_tensor/dense_attention/decoderMaskedMultiheadAttention.cu",
+        "csrc/fused_attention/fused_attention_per_tensor/per_tensor_common/update_kv_cache.cu",
+        "csrc/fused_attention/common/input_metadata_helper.cu"
+    ],
+    extra_compile_args={
+        "cxx": CXX_FLAGS,
+        "nvcc": NVCC_FLAGS,
+    },
+)
+ext_modules.append(fused_attention_extension_per_tensor_dense)
+
+
+fused_attention_extension_per_tensor_sparse = CUDAExtension(
+    name="omniserve_backend.fused_attention_per_tensor_sparse",
+    sources=[
+        "csrc/fused_attention/fused_attention_per_tensor/sparse_attention/fused_attention.cpp",
+        "csrc/fused_attention/fused_attention_per_tensor/sparse_attention/decoderMaskedMultiheadAttention.cu",
+        "csrc/fused_attention/fused_attention_per_tensor/per_tensor_common/update_kv_cache.cu",
+        "csrc/fused_attention/common/input_metadata_helper.cu"
+    ],
+    extra_compile_args={
+        "cxx": CXX_FLAGS,
+        "nvcc": NVCC_FLAGS,
+    },
+)
+ext_modules.append(fused_attention_extension_per_tensor_sparse)
+
+fused_attention_extension_pure_dense = CUDAExtension(
+    name="omniserve_backend.fused_attention_pure_dense",
+    sources=[
+        "csrc/fused_attention/fused_attention_pure_dense/fused_attention.cpp",
+        "csrc/fused_attention/fused_attention_pure_dense/decoderMaskedMultiheadAttention.cu",
+        "csrc/fused_attention/fused_attention_pure_dense/update_kv_cache.cu",
+        "csrc/fused_attention/fused_attention_pure_dense/input_metadata_helper.cu"
+    ],
+    extra_compile_args={
+        "cxx": CXX_FLAGS,
+        "nvcc": NVCC_FLAGS,
+    },
+)
+ext_modules.append(fused_attention_extension_pure_dense)
+
+
+fused_attention_ctx_pool_extension = CUDAExtension(
+    name="omniserve_backend.fused_attention_ctx_pool",
+    sources=[
+        "csrc/fused_attention/sparse_utils/ContextPool/pybind.cpp",
+        "csrc/fused_attention/sparse_utils/ContextPool/context_pool_kernel.cu",
+    ],
+    extra_compile_args={
+        "cxx": CXX_FLAGS,
+        "nvcc": NVCC_FLAGS,
+    },
+)
+ext_modules.append(fused_attention_ctx_pool_extension)
+
+
+fused_attention_selector_extension = CUDAExtension(
+    name="omniserve_backend.fused_attention_selector",
+    sources=[
+        "csrc/fused_attention/sparse_utils/KVPageSelector/fused_kv_page_selector.cpp",
+        "csrc/fused_attention/sparse_utils/KVPageSelector/KVPageSelector.cu",
+    ],
+    extra_compile_args={
+        "cxx": CXX_FLAGS,
+        "nvcc": NVCC_FLAGS,
+    },
+)
+ext_modules.append(fused_attention_selector_extension)
 
 
 qgemm_w8a8_extension = CUDAExtension(
-    name="qserve_backend.qgemm_w8a8",
+    name="omniserve_backend.qgemm_w8a8",
     sources=[
         "csrc/qgemm/w8a8/pybind.cpp",
         "csrc/qgemm/w8a8/w8a8_gemm_cuda.cu",
@@ -185,7 +273,7 @@ qgemm_w8a8_extension = CUDAExtension(
 ext_modules.append(qgemm_w8a8_extension)
 
 qgemm_w4a8_per_chn_extension = CUDAExtension(
-    name="qserve_backend.qgemm_w4a8_per_chn",
+    name="omniserve_backend.qgemm_w4a8_per_chn",
     sources=[
         "csrc/qgemm/w4a8_per_chn/pybind.cpp",
         "csrc/qgemm/w4a8_per_chn/gemm_cuda.cu",
@@ -199,7 +287,7 @@ ext_modules.append(qgemm_w4a8_per_chn_extension)
 
 
 qgemm_w4a8_per_group_extension = CUDAExtension(
-    name="qserve_backend.qgemm_w4a8_per_group",
+    name="omniserve_backend.qgemm_w4a8_per_group",
     sources=[
         "csrc/qgemm/w4a8_per_group/pybind.cpp",
         "csrc/qgemm/w4a8_per_group/gemm_cuda.cu",
@@ -213,7 +301,7 @@ ext_modules.append(qgemm_w4a8_per_group_extension)
 
 # Fuse kernels.
 fused_extension = CUDAExtension(
-    name="qserve_backend.fused_kernels",
+    name="omniserve_backend.fused_kernels",
     sources=["csrc/fused.cpp", "csrc/fused_kernels.cu"],
     extra_compile_args={
         "cxx": CXX_FLAGS,
@@ -224,7 +312,7 @@ ext_modules.append(fused_extension)
 
 # Layer normalization kernels.
 layernorm_extension = CUDAExtension(
-    name="qserve_backend.layernorm_ops",
+    name="omniserve_backend.layernorm_ops",
     sources=["csrc/layernorm.cpp", "csrc/layernorm_kernels.cu"],
     extra_compile_args={
         "cxx": CXX_FLAGS,
@@ -235,7 +323,7 @@ ext_modules.append(layernorm_extension)
 
 # Activation kernels.
 activation_extension = CUDAExtension(
-    name="qserve_backend.activation_ops",
+    name="omniserve_backend.activation_ops",
     sources=["csrc/activation.cpp", "csrc/activation_kernels.cu"],
     extra_compile_args={
         "cxx": CXX_FLAGS,
@@ -280,19 +368,14 @@ def get_requirements() -> List[str]:
 
 
 setuptools.setup(
-    name="qserve_backend",
+    name="omniserve_backend",
     version="0.1.0",
-    author="TinyChat serve Team",
+    author="OmniServe Team",
     license="Apache 2.0",
     description=("A high-throughput and memory-efficient inference and "
                  "serving engine for LLMs"),
     long_description=read_readme(),
     long_description_content_type="text/markdown",
-    url="https://github.com/vllm-project/vllm",
-    project_urls={
-        "Homepage": "https://github.com/mit-han-lab/qserve",
-        "Documentation": "https://qserve_backend.readthedocs.io/en/latest/",
-    },
     classifiers=[
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",

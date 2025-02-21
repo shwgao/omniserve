@@ -4,6 +4,11 @@
 #   author={Lin*, Yujun and Tang*, Haotian and Yang*, Shang and Zhang, Zhekai and Xiao, Guangxuan and Gan, Chuang and Han, Song},
 #   year={2024}
 # }
+# @article{yang2025lserve,
+#   title={LServe: Efficient Long-sequence LLM Serving with Unified Sparse Attention},
+#   author={Yang*, Shang and Guo*, Junxian and Tang, Haotian and Hu, Qinghao and Xiao, Guangxuan and Tang, Jiaming and Lin, Yujun and Liu, Zhijian and Lu, Yao and Han, Song},
+#   year={2025}
+# }
 
 import argparse
 from typing import List, Tuple
@@ -11,11 +16,11 @@ import random
 
 import datasets
 
-import qserve.utils.constants
-from qserve import EngineArgs, LLMEngine, SamplingParams
-from qserve.conversation import get_conv_template_name, get_conv_template
+import omniserve.utils.constants
+from omniserve import EngineArgs, LLMEngine, SamplingParams
+from omniserve.conversation import get_conv_template_name, get_conv_template
 
-max_seq_len = qserve.utils.constants.max_seq_len
+max_seq_len = omniserve.utils.constants.max_seq_len
 BG_BLUE = "\033[44m"
 BG_GREEN = "\033[42m"
 BG_PINK = "\033[45m"

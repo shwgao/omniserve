@@ -5,6 +5,11 @@
 //   journal={arXiv preprint arXiv:2405.04532},
 //   year={2024}
 // }
+// @article{yang2025lserve,
+//   title={LServe: Efficient Long-sequence LLM Serving with Unified Sparse Attention},
+//   author={Yang*, Shang and Guo*, Junxian and Tang, Haotian and Hu, Qinghao and Xiao, Guangxuan and Tang, Jiaming and Lin, Yujun and Liu, Zhijian and Lu, Yao and Han, Song},
+//   year={2025}
+// }
 
 #include "gemm_cuda.h"
 #include <cuda_fp16.h>
@@ -654,12 +659,12 @@ void gemm_forward_cuda(torch::Tensor _in_feats,
   if (num_out_feats > 128)
   {
     constexpr int CTA_M = 128;
-    constexpr int CTA_N = 128;
+    constexpr int CTA_N = 64;
     constexpr int CTA_K = 64;
     constexpr int WARP_M = 64;
     constexpr int WARP_N = 32;
     constexpr int WARP_K = 64;
-    constexpr int STAGES = 3;
+    constexpr int STAGES = 4;
     KERNEL_LAUNCH_CODE
   }
   else if (num_out_feats >= 128)

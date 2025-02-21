@@ -1,133 +1,122 @@
-# QServe: ***W4A8KV4*** Quantization and System Co-design for Efficient LLM Serving
+# OmniServe: Unified and Efficient Inference Engine for Large-Scale LLM Serving
 
-[[Paper](https://arxiv.org/abs/2405.04532)] [[DeepCompressor Library](https://github.com/mit-han-lab/deepcompressor/tree/lmquant-v0.0.0-deprecated)] [[Website](https://hanlab.mit.edu/projects/qserve)]
+**[Paper (QServe)](https://arxiv.org/abs/2405.04532) | [Paper (LServe)](https://arxiv.org/abs/2502.14866) | [Website (QServe)](https://hanlab.mit.edu/projects/qserve) | [Website (LServe)](https://hanlab.mit.edu/projects/lserve)**
 
-**QServe: Efficient and accurate LLM serving system** on GPUs with W4A8KV4 quantization (4-bit weights, 8-bit activations, and 4-bit KV cache). Compared with leading industry solution TensorRT-LLM, QServe achieves **1.2x-1.4x higher throughput** when serving Llama-3-8B, and **2.4x-3.5x higher throughput** when serving Qwen1.5-72B, on L40S and A100 GPUs. QServe also allows users to achieve A100-level throughput on **3x cheaper** L40S GPUs.  
-
-QServe is suitable for **large-scale synthetic data generation** with both LLMs and VLMs. Check out our latest [QServe-VLM](#qserve-vlm) release!
-
-![teaser](assets/figures/teaser.png)
-![efficiency](assets/figures/efficiency.png)
-
-
-## Introduction
-
-Quantization can accelerate large language model (LLM) inference. Going beyond INT8 quantization, the research community is actively exploring even lower precision, such as INT4. Nonetheless, state-of-the-art INT4 quantization techniques only accelerate low-batch, edge LLM inference, failing to deliver performance gains in large-batch, cloud-based LLM serving. We uncover a critical issue: existing INT4 quantization methods suffer from significant runtime overhead (20-90%) when **dequantizing either weights or partial sums** on GPUs. To address this challenge, we introduce **QoQ**, a W4A8KV4 quantization algorithm with 4-bit weight, 8-bit activation, and 4-bit KV cache. QoQ stands for **quattuor-octo-quattuor**, which represents 4-8-4 in Latin. QoQ is implemented by the **QServe** inference library that achieves measured speedup. The key insight driving QServe is that the efficiency of LLM serving on GPUs is critically influenced by **operations on low-throughput CUDA cores**. Building upon this insight, in QoQ algorithm, we introduce progressive quantization that can allow low dequantization overhead in W4A8 GEMM. Additionally, we develop SmoothAttention to effectively mitigate the accuracy degradation incurred by 4-bit KV quantization. In the QServe system, we perform compute-aware weight reordering and take advantage of register-level parallelism to reduce dequantization latency. We also make fused attention memory-bound, harnessing the performance gain brought by KV4 quantization. As a result, QServe improves the maximum achievable serving throughput of Llama-3-8B by **1.2×** on A100, **1.4×** on L40S; and Qwen1.5-72B by **2.4×** on A100, **3.5×** on L40S, compared to TensorRT-LLM. Remarkably, QServe on L40S GPU can achieve even higher throughput than TensorRT-LLM on A100. Thus, QServe effectively reduces the dollar cost of LLM serving by **3×**.
-
-**The current release supports:**
-
-- Blazingly fast system support for **QoQ W4A8KV4** quantization (Algorithim release: [DeepCompressor Library](https://github.com/mit-han-lab/deepcompressor/tree/lmquant-v0.0.0-deprecated));
-- Pre-quantized QServe model zoo with **W4A8KV4 QoQ** for mainstream LLMs;
-- **Fully PyTorch-based** runtime and user interface for LLM serving, with **TensorRT-LLM-level efficiency** and **PyTorch-level flexibility**;
-- Full support for **in-flight batching** and **paged attention**;
-- Efficient **fused** CUDA kernels for **W4A8**/W8A8 GEMM and **KV4**/KV8 attention;
-- Easy-to-use examples on speed benchmarking and **large-scale end-to-end content generation** (with W4A8KV4, in-flight batching and paged attention).
+OmniServe aims to revolutionize large-scale LLM serving by unifying and optimizing key advancements in both low-bit quantization and long-context processing. OmniServe integrates the innovations from [QServe](https://arxiv.org/abs/2405.04532), which boosts efficiency with W4A8KV4 quantization and reduces dequantization overheads, and [LServe](https://arxiv.org/abs/2502.14866), which accelerates long-context LLM inference through unified sparse attention and hierarchical KV cache management. OmniServe delivers a comprehensive solution for scalable and cost-effective LLM deployment. This unified system addresses the dual challenges of computational complexity and memory overhead, achieving significant speedups in both prefill and decoding stages, while also maximizing GPU throughput and minimizing infrastructure costs.
 
 ## News
-
-- [2024/09] 🔥 Check out our latest QServe release for [**VLM** support](#qserve-vlm)! QServe now enables large-scale synthetic vision caption generation with **1.8x** higher throughput compared with a batched HuggingFace implementation.
-- [2024/07] QServe W4A8 GEMM kernels source code now available!
+- [2025/02] 🔥 **OmniServe is now publicly available!** OmniServe has integrated optimizations from both QServe and LServe into one single LLM inference framework. Experience efficient and accurate inference for both [long-context](#lserve-efficient-long-sequence-llm-serving-with-unified-sparse-attention) and [quantized](#qserve-w4a8kv4-quantization-and-system-co-design-for-efficient-llm-serving) LLMs with OmniServe now!
+- [2025/02] 🏆 Both **QServe and LServe have been accepted by MLSys 2025**!
+- [2024/12] 🔥 QServe has been integrated into NVIDIA [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM/blob/main/examples/llama/README.md#w4aint8-quantization-qserve)!
 - [2024/05] 🔥 QServe is publicly released! Check our paper [here](https://arxiv.org/abs/2405.04532).
 
+
+## Key Features
+**OmniServe** is a unified, flexible, and efficient LLM serving system designed to support modern large language models and multi-modal language models. With configurable quantization precisions and hybrid sparse attention patterns, OmniServe integrates the strengths of [QServe](#qserve-w4a8kv4-quantization-and-system-co-design-for-efficient-llm-serving) and [LServe](#lserve-efficient-long-sequence-llm-serving-with-unified-sparse-attention), enabling efficient processing of both large-batch and long-context inputs, significantly reducing LLM serving costs while maintaining high response quality.
+
 ## Contents
+- [Installation](#installation)
+- [OmniServe Model Zoo](#omniserve-model-zoo)
 
 - [QServe: ***W4A8KV4*** Quantization and System Co-design for Efficient LLM Serving](#qserve-w4a8kv4-quantization-and-system-co-design-for-efficient-llm-serving)
   - [Introduction](#introduction)
-  - [News](#news)
-  - [Contents](#contents)
-  - [Installation](#installation)
-  - [QServe-VLM](#qserve-vlm)
-  - [QServe Model Zoo](#qserve-model-zoo)
   - [Usage and Examples](#usage-and-examples)
   - [Results](#results)
     - [Accuracy Evaluation](#accuracy-evaluation)
     - [Efficiency Benchmarks](#efficiency-benchmarks)
-  - [Reference](#reference)
-  - [Related Projects](#related-projects)
-  - [Acknowledgement](#acknowledgement)
+
+
+- [LServe: Efficient Long-Sequence LLM Serving with ***Unified Sparse Attention***](#lserve-efficient-long-sequence-llm-serving-with-unified-sparse-attention)
+  - [Introduction](#introduction-1)
+  - [Usage and Examples](#usage-and-examples-1)
+  - [Results](#results-1)
+    - [Accuracy Evaluation](#accuracy-evaluation-1)
+    - [Efficiency Benchmarks](#efficiency-benchmarks-1)
+
+
+- [Reference](#reference)
+- [Related Projects](#related-projects)
+- [Acknowledgement](#acknowledgement)
 
 
 ## Installation
 
 1. Clone this repository and navigate to the corresponding folder:
-```
-git clone https://github.com/mit-han-lab/qserve
-cd qserve
+```bash
+git clone https://github.com/mit-han-lab/OmniServe
+cd OmniServe
 ```
 
-2. Install QServe
+2. Install OmniServe
 
 2.1 LLM setup tutorial
 
 If you hope to serve text-only LLMs, please follow the tutorial below:
 
-```bash=
-conda create -n QServe python=3.10 -y
-conda activate QServe
+```bash
+conda create -n OmniServe python=3.10 -y
+conda activate OmniServe
 pip install --upgrade pip  # enable PEP 660 support
-# This is optional if you prefer to use built-in nvcc
-conda install -c nvidia cuda-toolkit -y
+
+conda install -c nvidia cuda-toolkit -y  # This is optional if you prefer to use built-in nvcc
+
+# Install OmniServe package
 pip install -e .
 pip install flash-attn --no-build-isolation
 ```
-We recommend starting an interactive python CLI interface and run
-```python=
-import flash_attn
-```
-to check whether FlashAttention-2 is installed successfully. If not, we recommend downloading pre-built wheels from [here](https://github.com/Dao-AILab/flash-attention/releases/tag/v2.5.8). Please notice:
+
+We recommend starting an interactive python CLI interface and run `import flash_attn` to check whether FlashAttention-2 is installed successfully. If not, we recommend downloading pre-built wheels from [here](https://github.com/Dao-AILab/flash-attention/releases/tag/v2.5.8). Please notice:
 
 - PyTorch version needs to exactly match with the version specified in the `.whl` name;
 - Check out both `cxx11abiTRUE` and `cxx11abiFALSE` wheels if one of them does not work;
 - It's recommended to match CUDA version specified in the `.whl` filename, but minor mismatches (e.g. 12.1 vs 12.2, or even 11.8 vs 12.2) usually do not matter.
 
+2.2 Sparse prefilling with [Block-Sparse-Attention](https://github.com/mit-han-lab/Block-Sparse-Attention).
 
-2.2 VLM setup tutorial
+We provide pre-built wheels for Block-Sparse-Attention [here](https://github.com/mit-han-lab/Block-Sparse-Attention/releases). Please download and install the `.whl` file with pip according to your environment. Similar to `flash_attn`, We recommend starting an interactive python CLI interface and run `import block_sparse_attn` to check the installation. Please also notice:
 
-QServe also supports synthetic caption generation with VILA VLMs. Please follow the tutorial below:
+- PyTorch version needs to exactly match with the version specified in the `.whl` name;
+- Check out both `cxx11abiTRUE` and `cxx11abiFALSE` wheels if one of them does not work;
+- It's recommended to match CUDA version specified in the `.whl` filename, but minor mismatches (e.g. 12.1 vs 12.2, or even 11.8 vs 12.2) usually do not matter.
 
-First set up environment for QServe:
+To build Block-Sparse-Attention from source, please follow the instructions below:
 
-```bash=
-conda create -n QServe python=3.10 -y
-conda activate QServe
-pip install --upgrade pip  # enable PEP 660 support
-# This is optional if you prefer to use built-in nvcc
-conda install -c nvidia cuda-toolkit -y
-pip install -e .
+```bash
+git clone https://github.com/mit-han-lab/Block-Sparse-Attention.git --recursive
+cd Block-Sparse-Attention
+
+pip install packaging
+pip install ninja
+python setup.py install
 ```
 
-Then install VILA and VILA's dependencies:
-```bash=
-cd ~
-git clone https://github.com/NVlabs/VILA
-cd VILA
-pip install https://github.com/Dao-AILab/flash-attention/releases/download/v2.5.8/flash_attn-2.5.8+cu122torch2.3cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
-# Install VILA
-pip install -e .
-pip install -e ".[train]"
-```
-Please notice that VILA has a relatively strict dependency on the versions of PyTorch/TorchVision libraries, so it is necessary to make sure the library versions are compatible with VILA.
+
+<!-- 2.2 [Optional] VLM setup tutorial
+
+QServe also supports synthetic caption generation with VILA VLMs. Please follow the [tutorial](#qserve-vlm-installation) for installation details. -->
 
 
-3. Compile the CUDA kernels.
+3. Compile the CUDA kernels for OmniServe.
 
-Please return to the QServe directory and execute the following commands:
+Please return to the OmniServe directory and execute the following commands:
 
-```bash=
+```bash
+pip install ninja   # Install ninja if not already
+
 cd kernels
 python setup.py install
 ```
 
 4. If you want to clone our model zoo, please make sure that `git-lfs` is installed.
 
-## QServe Model Zoo
+## OmniServe Model Zoo
 
 We provide pre-quantized checkpoints for multiple model families. For example, for Llama-3-8B model, please run the following commands to download:
 
 ```bash
 # git lfs install  # install git lfs if not already
 mkdir -p qserve_checkpoints && cd qserve_checkpoints
-git clone https://huggingface.co/mit-han-lab/Llama-3-8B-QServe 
+git clone https://huggingface.co/mit-han-lab/Llama-3-8B-Instruct-QServe 
 ```
 
 For other models, please refer to the detailed support list for the links to download:
@@ -151,6 +140,32 @@ python checkpoint_converter.py --model-path <hf-model-path> --quant-path <fake-q
 # <fake-quant-model-path> is a directory generated by DeepCompressor, including model.pt and scale.pt
 ```
 We also provide a [script](./scripts/ckpt_converter/convert.sh) to run the checkpoint converter. The final model will be automatically stored under `qserve_checkpoints`. 
+
+
+# QServe: ***W4A8KV4*** Quantization and System Co-design for Efficient LLM Serving
+
+**[Paper](https://arxiv.org/abs/2405.04532) | [Website](https://hanlab.mit.edu/projects/qserve) | [DeepCompressor Library](https://github.com/mit-han-lab/deepcompressor/tree/lmquant-v0.0.0-deprecated)**
+
+**QServe: Efficient and accurate LLM serving system** on GPUs with W4A8KV4 quantization (4-bit weights, 8-bit activations, and 4-bit KV cache). Compared with leading industry solution TensorRT-LLM, QServe achieves **1.2x-1.4x higher throughput** when serving Llama-3-8B, and **2.4x-3.5x higher throughput** when serving Qwen1.5-72B, on L40S and A100 GPUs. QServe also allows users to achieve A100-level throughput on **3x cheaper** L40S GPUs.  
+
+QServe is suitable for **large-scale synthetic data generation** with both LLMs and VLMs. Check out our latest [QServe-VLM](#qserve-vlm) release!
+
+![teaser](assets/qserve_figures/teaser.png)
+![efficiency](assets/qserve_figures/efficiency.png)
+
+
+## Introduction
+
+Quantization can accelerate large language model (LLM) inference. Going beyond INT8 quantization, the research community is actively exploring even lower precision, such as INT4. Nonetheless, state-of-the-art INT4 quantization techniques only accelerate low-batch, edge LLM inference, failing to deliver performance gains in large-batch, cloud-based LLM serving. We uncover a critical issue: existing INT4 quantization methods suffer from significant runtime overhead (20-90%) when **dequantizing either weights or partial sums** on GPUs. To address this challenge, we introduce **QoQ**, a W4A8KV4 quantization algorithm with 4-bit weight, 8-bit activation, and 4-bit KV cache. QoQ stands for **quattuor-octo-quattuor**, which represents 4-8-4 in Latin. QoQ is implemented by the **QServe** inference library that achieves measured speedup. The key insight driving QServe is that the efficiency of LLM serving on GPUs is critically influenced by **operations on low-throughput CUDA cores**. Building upon this insight, in QoQ algorithm, we introduce progressive quantization that can allow low dequantization overhead in W4A8 GEMM. Additionally, we develop SmoothAttention to effectively mitigate the accuracy degradation incurred by 4-bit KV quantization. In the QServe system, we perform compute-aware weight reordering and take advantage of register-level parallelism to reduce dequantization latency. We also make fused attention memory-bound, harnessing the performance gain brought by KV4 quantization. As a result, QServe improves the maximum achievable serving throughput of Llama-3-8B by **1.2×** on A100, **1.4×** on L40S; and Qwen1.5-72B by **2.4×** on A100, **3.5×** on L40S, compared to TensorRT-LLM. Remarkably, QServe on L40S GPU can achieve even higher throughput than TensorRT-LLM on A100. Thus, QServe effectively reduces the dollar cost of LLM serving by **3×**.
+
+**The current release supports:**
+
+- Blazingly fast system support for **QoQ W4A8KV4** quantization (Algorithim release: [DeepCompressor Library](https://github.com/mit-han-lab/deepcompressor/tree/lmquant-v0.0.0-deprecated));
+- Pre-quantized QServe model zoo with **W4A8KV4 QoQ** for mainstream LLMs;
+- **Fully PyTorch-based** runtime and user interface for LLM serving, with **TensorRT-LLM-level efficiency** and **PyTorch-level flexibility**;
+- Full support for **in-flight batching** and **paged attention**;
+- Efficient **fused** CUDA kernels for **W4A8**/W8A8 GEMM and **KV4**/KV8 attention;
+- Easy-to-use examples on speed benchmarking and **large-scale end-to-end content generation** (with W4A8KV4, in-flight batching and paged attention).
 
 
 ## Usage and Examples
@@ -217,115 +232,11 @@ python qserve_e2e_generation.py \
 
 We also provide sample scripts in QServe. 
 
-- End to end generation: `./scripts/run_e2e.sh`;
-- Speed benchmarking: `./scripts/benchmark/benchmark_a100.sh` or `./scripts/benchmark/benchmark_l40s.sh`.
+- End to end generation: `./scripts/qserve_e2e.sh`;
+- Speed benchmarking: `./scripts/qserve_benchmark/benchmark_a100.sh` or `./scripts/qserve_benchmark/benchmark_l40s.sh`.
 
 These scripts are expected to be executed in the QServe project folder (not in the `scripts` folder). Please note that `git-lfs` is needed for downloading QServe benchmark config files from huggingface before running the benchmark scripts.
 
-## QServe-VLM
-
-QServe now supports large-scale efficient image captioning with the integration of [VILA](https://github.com/NVlabs/VILA). 
-
-Synthetic data generated by VLM is important. It can be used to help improve VLMs themselves (like [ShareGPT4V](https://arxiv.org/abs/2311.12793), [CapsFusion](https://arxiv.org/abs/2310.20550)) or to improve image generation models (like [PixArt-alpha](https://arxiv.org/abs/2310.00426), [DALL-E-3](https://cdn.openai.com/papers/dall-e-3.pdf)). Generating image captions with a naive HuggingFace pipeline is not efficient enough, and QServe provides a push-the-button accelerated solution.
-
-![cap_example](assets/figures/vlm_cap_example.png)
-
-1. Data format
-
-Our current implementation assumes that the data is stored in [webdataset](https://github.com/webdataset/webdataset) format. The webdataset format assumes that all images are stored in the following form:
-
-```bash
-dataset/
-├── shard-000000.tar
-├── shard-000001.tar
-├── shard-000002.tar
-├── ...
-└── metadata_info.json
-```
-
-The `metadata_info.json` file should follow the following format:
-```json
-{
-  "shardlist": [
-    {
-      "url": "shard-000000.tar",
-      "nsamples": 5046,
-      "filesize": 487823360
-    },
-  ],
-  "wids_version": 1
-}
-```
-
-It contains the number of samples in each tar and the size of each tar file (in Bytes). 
-
-2. Data and checkpoint preparation
-
-In our tutorial we use [cc3m](https://huggingface.co/datasets/pixparse/cc3m-wds) as an example, and we will generate new synthetic captions with W8A8 [VILA1.5-13B](https://huggingface.co/Efficient-Large-Model/VILA1.5-13b) and our QServe engine.
-
-Download data:
-```bash=
-git clone https://huggingface.co/datasets/pixparse/cc3m-wds
-```
-
-Generate info file:
-```bash=
-cd data_prepare
-python generate_cc_wds_meta.py
-```
-
-You may need to change some paths in this file.
-
-After generating the webdataset metadata, please download the W8A8 VILA1.5-13B model compatible with our QServe engine:
-
-```bash=
-https://huggingface.co/mit-han-lab/VILA1.5-13B-QServe-W8A8
-```
-
-3. Run QServe to generate captions for all tars in the webdataset:
-
-```bash
-export dataset_path=<>   # Path to the images (WebDataset format)
-export info_path=<>      # Path to the json file (WebDataset format)
-export model_path=./qserve_checkpoints/VILA1.5-13B-QServe-W8A8  # Please set the path accordingly
-
-python qserve_vila_caption.py \
-      --model $model_path \
-      --quant-path $model_path \
-      --precision w8a8kv8 \
-      --ifb-mode \
-      --group-size -1 \
-      --max-num-seqs 32 \
-      --run-vlm \
-      --img-per-seq 1 \
-      --omit-prompt \
-      --max-new-tokens 300 \
-      --data_path $dataset_path \
-      --info_path $info_path
-```
-
-The script above runs on a single GPU. We also provide [sample scripts](./scripts/vlm_cap_scripts/run_cap_synth-cc12m_vila13b_8gpus.sh) for QServe-VILA captioning, in which we apply data parallelism for higher captioning throughputs.
-
-```bash=
-export job_id=0
-./scripts/vlm_cap_scripts/run_cap_synth-cc12m_vila13b_8gpus.sh $job_id
-```
-
-The script takes in one argument `job_id`. It automatically utilizes 8 GPUs to caption tar files with indices `8 * job_id`, `8 * job_id + 1`, ... `8 * job_id + 7`. One can scale up this script easily to multiple nodes, where each node have different `job_id`. It is recommended to run this script on a slurm cluster management system on a multi-node datacenter.
-
-Sample slurm launch script:
-```bash=
-sbatch ./scripts/vlm_cap_scripts/slurm_launch_cap_synth-cc12m_vila13b_8gpus.sh 
-```
-
-Sample image caption generated by QServe:
-```json
-{
-    "000000000": {
-        "VILA1.5-13b-qserve-w8a8": "The image captures a serene scene of a flooded landscape. The dominant feature is a river, its waters a murky brown, meandering through the center of the frame. The river is not alone; it is accompanied by a multitude of trees, their leaves a vibrant green, dotting the landscape on both sides. \n\nThe sky above is a canvas of gray, painted with thick, heavy clouds that hint at the possibility of more rain. The perspective of the image is particularly striking, taken from a high vantage point that allows for a sweeping view of the scene below. This bird's-eye view provides a comprehensive look at the river's path and the distribution of the trees.\n\nDespite the flood, there's a certain tranquility to the scene. The river, the trees, and the sky - each element holds its own, yet together they create a harmonious picture of nature's resilience in the face of adversity. There are no texts or human-made objects in the image, just the raw beauty of nature in its most elemental form.</s>"}
-    }
-}
-```
 
 ## Results
 
@@ -389,9 +300,120 @@ Below is the WikiText2 perplexity evaluated with 2048 sequence length. The lower
 \* SmoothQuant is evaluated with per-tensor static KV cache quantization.
 
 
+# LServe: Efficient Long-Sequence LLM Serving with ***Unified Sparse Attention***
+
+**[Paper](https://arxiv.org/abs/2502.14866) | [Website](https://hanlab.mit.edu/projects/lserve) | [DeepCompressor Library](https://github.com/mit-han-lab/deepcompressor/tree/lmquant-v0.0.0-deprecated)**
+
+**LServe: Efficient and accurate serving system for long-context LLMs** on GPUs with Unified Sparse Attention. Introducing hybrid sparse attention patterns into the inference pipeline, LServe surpasses state-of-the-art LLM serving systems, including vLLM and TensorRT-LLM. 
+
+
+![lserve_teaser](assets/lserve_figures/teaser.png)
+
+## Introduction
+Large language models (LLMs) have shown remarkable potential in processing long sequences, yet efficiently serving these long-context models remains challenging due to the quadratic computational complexity of attention in the prefilling stage and the large memory footprint of the KV cache in the decoding stage. To address these issues, we introduce **LServe, an efficient system that accelerates long-sequence LLM serving via hybrid sparse attention**. This method unifies different hardware-friendly, structured sparsity patterns for both prefilling and decoding attention into a single framework, where computations on less important tokens are skipped block-wise. LServe demonstrates the compatibility of static and dynamic sparsity in long-context LLM attention. This design enables multiplicative speedups by combining these optimizations. Specifically, we convert half of the attention heads to nearly free streaming heads in both the prefilling and decoding stages. Additionally, we find that only a constant number of KV pages is required to preserve long-context capabilities, irrespective of context length. We then design a hierarchical KV page selection policy that dynamically prunes KV pages based on query-centric similarity. On average, LServe accelerates LLM prefilling by up to **2.9×** and decoding by **1.3-2.1×** over vLLM, maintaining long-context accuracy.
+
+
+## Usage and Examples
+
+We provide sample scripts for both efficiency benchmarking and accuracy evaluation of LServe system.
+
+1. End-to-end Generation. We provide a sample scripts demonstrating how to use LServe for e2e LLM inference. Run the following command to check it out!
+
+```bash
+bash scripts/lserve_e2e.sh
+```
+
+In this script, we simulate a simplified version of Needle-in-a-Haystack task. The expected output (needle) is "eating a sandwich and sitting in Dolores Park on a sunny day."
+
+
+2. Speed Benchmarking. The efficiency evaluation of LServe can be easily accomplished with a push-button command:
+
+```bash
+bash scripts/lserve_benchmark/launch.sh
+```
+
+Or specify your own test configurations with the following command:
+
+```bash
+bash scripts/lserve_benchmark/benchmark.sh \
+    $model_path $attn_path \
+    $batch_size $prefill_len $decode_len \
+    $precision $kv_quant_granularity \
+    $static_sparsity $sparse_prefill_mode \
+    $sparse_decode_mode $dynamic_attn_budget $dynamic_select_interval $sub_chunk_per_block \
+    $gpu_id
+```
+
+
+3. Accuracy Evaluation. In LServe, we provide accuracy evaluation scripts for Benchmarks such as [LongBench](https://arxiv.org/abs/2308.14508) and [Needle-in-a-Haystack](https://github.com/gkamradt/LLMTest_NeedleInAHaystack).
+
+<!-- [TODO] Do we need to provide more flexible acc eval scripts with deep compressor? -->
+
+* Needle-in-a-Haystack Evaluation. Evaluation results will be updated into `eval/needle/img`.
+```bash
+bash eval/scripts/needle/submit_niah.sh
+```
+
+* LongBench Evaluation. Evaluation results can be found in `eval/LongBench/pred`.
+```bash
+bash eval/scripts/LongBench/submit_longbench.sh
+```
+
+* We also provide slurm scripts for paralleled evaluation across multiple GPUs/nodes. Please find more examples in `eval/scripts`.
+
+<!-- 4. [Optional] Checkpoint Preparation.
+
+The above commands will automatically download the checkpoints we pre-built for LServe benchmarking and evaluation. To built your own checkpoints for LServe, please follow the instructions below:
+
+* Quantize the large language model with [DeepCompressor](https://github.com/mit-han-lab/deepcompressor).
+
+[TODO/WIP] Add a patch for per-tensor quant in public deep compressor.
+
+* Prepare the quantized checkpoint with our [`checkpoint_converter`](./scripts/ckpt_converter/checkpoint_converter.py).
+
+  * For LServe models, please use the following command to prepare the checkpoint with recommended configurations:
+  ```bash
+  python checkpoint_converter.py --model-path $MODEL_PATH --quant-path $QUANT_PATH --w-bit 8 --group-size -1 --device cpu --kv-per-tensor
+  ```
+
+* Identify streaming attention heads with [Duo Attention](https://github.com/mit-han-lab/duo-attention).
+
+  * We provide attention patterns for prevailing models in [`attn_patterns`](./attn_patterns/). To support your own models, please utilize the [Duo Attention scripts](https://github.com/mit-han-lab/duo-attention?tab=readme-ov-file#retrieval-head-identification) for the streaming head identification process. -->
+
+
+
+
+## Results
+
+We evaluate LServe across diverse long-context benchmarks and models, demonstrating consistently superior throughput over existing LLM serving frameworks for long-sequence inference, without compromising accuracy.
+
+### Accuracy Evaluation
+We evaluated LServe across a wide range of long-context benchmarks including [LongBench](https://arxiv.org/abs/2308.14508) and [Needle-In-A-Haystack](https://github.com/gkamradt/LLMTest_NeedleInAHaystack). Some of the evaluation results on Llama-3-8B are as follows.
+
+![lserve_acc](assets/lserve_figures/lserve-acc.png)
+
+Please find more accuracy evaluation results in the [LServe paper](https://arxiv.org/abs/2502.14866).
+
+### Efficiency Benchmarks
+
+Compared with the state-of-the-art serving systems, LServe demonstrates significant and consistent efficiency improvements across different GPU platforms and model architectures. On Llama-3-8B and Minitron-4B, LServe achieves 1.5× average speedup over vLLM. For MHA-based model Llama-2-7B, LServe runs more than 2.0× faster than baselines on average.
+
+Benchmarking setting: We evaluate the decoding throughput across different sequence lengths for each model. The measured numbers were than normalized to 1 in the following figure. Benchmarks were conducted on NVIDIA A100 80G and L40S 48G GPUs.
+
+![lserve_speed](assets/lserve_figures/lserve-speed.png)
+
 ## Reference
 
-If you find QServe useful or relevant to your research and work, please kindly cite our paper:
+If you find OmniServe/QServe/LServe useful or relevant to your research and work, please kindly cite our paper:
+
+```
+@article{yang2025lserve,
+  title={LServe: Efficient Long-sequence LLM Serving with Unified Sparse Attention},
+  author={Yang*, Shang and Guo*, Junxian and Tang, Haotian and Hu, Qinghao and Xiao, Guangxuan and Tang, Jiaming and Lin, Yujun and Liu, Zhijian and Lu, Yao and Han, Song},
+  journal={arXiv preprint arXiv:2502.14866},
+  year={2025}
+}
+```
 
 ```
 @article{lin2024qserve,
@@ -404,19 +426,24 @@ If you find QServe useful or relevant to your research and work, please kindly c
 
 ## Team
 
-The QServe serving library is maintained by the following research team:
+The OmniServe serving library is maintained by the following research team:
 
-- [Haotian Tang](http://kentang.net), system lead, MIT EECS;
-- [Shang Yang](https://ys-2020.github.io), system lead, MIT EECS;
-- [Yujun Lin](https://yujunlin.com), algorithm lead, MIT EECS;
+- [Shang Yang](https://ys-2020.github.io), QServe and LServe system lead, MIT EECS; 
+- [Haotian Tang](http://kentang.net), QServe system lead, LServe mentor, MIT EECS;
+- [Junxian Guo](https://scholar.google.com/citations?user=3P6kczsAAAAJ&hl=zh-CN), LServe system lead, SJTU and MIT EECS; 
+- [Yujun Lin](https://yujunlin.com), QServe quantization algorithm lead, MIT EECS;
+- [Qinghao Hu](https://tonyhao.xyz/), system evaluation, MIT EECS;
 - [Zhekai Zhang](https://hanlab.mit.edu/team/zhekai-zhang), system evaluation, MIT EECS;
 - [Guangxuan Xiao](https://guangxuanx.com), algorithm evaluation, MIT EECS;
+- [Jiaming Tang](https://jiamingtang.me/), algorithm evaluation, MIT EECS;
+- [Zhijian Liu](https://zhijianliu.com), advisor, University of California San Diego and NVIDIA;
+- [Yao Lu](https://scholar.google.com/citations?user=OI7zFmwAAAAJ&hl=en), advisor, NVIDIA;
 - [Chuang Gan](https://people.csail.mit.edu/ganchuang), advisor, UMass Amherst and MIT-IBM Watson AI Lab;
 - [Song Han](https://songhan.mit.edu), advisor, MIT EECS and NVIDIA.
 
 ## Related Projects
 
-The following projects are highly related to QServe. Our group has developed full-stack application-algorithm-system-hardware support for efficient large models, receiving **9k+ GitHub stars** and **over 1M Huggingface community downloads**.
+The following projects are highly related to OmniServe. Our group has developed full-stack application-algorithm-system-hardware support for efficient large models, receiving **9k+ GitHub stars** and **over 10M Huggingface community downloads**.
 
 You are also welcome to check out [MIT HAN LAB](https://hanlab.mit.edu) for other exciting projects on **Efficient Generative AI**!
 
@@ -437,4 +464,4 @@ You are also welcome to check out [MIT HAN LAB](https://hanlab.mit.edu) for othe
 
 ## Acknowledgement
 
-We thank Julien Demouth, Jun Yang, and Dongxu Yang from NVIDIA for the helpful discussions. QServe is also inspired by many open-source libraries, including (but not limited to) [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM), [vLLM](https://github.com/vllm-project/vllm), [vLLM-SmoothQuant](https://github.com/vllm-project/vllm/pull/1112), [FlashAttention-2](https://github.com/Dao-AILab/flash-attention), [LMDeploy](https://github.com/InternLM/lmdeploy), [TorchSparse++](https://github.com/mit-han-lab/torchsparse), [GPTQ](https://arxiv.org/abs/2210.17323), [QuaRot](https://arxiv.org/abs/2404.00456) and [Atom](https://arxiv.org/abs/2310.19102). 
+We thank Julien Demouth, June Yang, and Dongxu Yang from NVIDIA for the helpful discussions. OmniServe is also inspired by many open-source libraries, including (but not limited to) [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM), [vLLM](https://github.com/vllm-project/vllm), [vLLM-SmoothQuant](https://github.com/vllm-project/vllm/pull/1112), [FlashAttention-2](https://github.com/Dao-AILab/flash-attention), [LMDeploy](https://github.com/InternLM/lmdeploy), [TorchSparse++](https://github.com/mit-han-lab/torchsparse), [GPTQ](https://arxiv.org/abs/2210.17323), [QuaRot](https://arxiv.org/abs/2404.00456) and [Atom](https://arxiv.org/abs/2310.19102). 

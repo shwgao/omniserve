@@ -6,6 +6,11 @@
 //   journal={arXiv preprint arXiv:2405.04532},
 //   year={2024}
 // }
+// @article{yang2025lserve,
+//   title={LServe: Efficient Long-sequence LLM Serving with Unified Sparse Attention},
+//   author={Yang*, Shang and Guo*, Junxian and Tang, Haotian and Hu, Qinghao and Xiao, Guangxuan and Tang, Jiaming and Lin, Yujun and Liu, Zhijian and Lu, Yao and Han, Song},
+//   year={2025}
+// }
 #include <ATen/cuda/CUDAContext.h>
 #include <torch/extension.h>
 
@@ -119,7 +124,7 @@ __global__ void generalLayerNorm(const T* input, const T* gamma, const T* beta, 
         for (int i = tidx; i < n_elems; i += blockDim.x)
         {
             const T val = use_shmem ? shmem[i] : input[bidx * n_elems + i];
-            float_packed_t diff = cuda_cast<float_packed_t>(val) - s_mean;
+            float_packed_t diff = cuda_cast<float_packed_t>(val); // - s_mean;
             local_var_sum += cuda_sum<float>(diff * diff);
         }
         variance = blockReduceSum(local_var_sum);
@@ -255,7 +260,7 @@ __global__ void generalLayerNorm_fuse_sum(const T* input, const T* gamma, const 
         for (int i = tidx; i < n_elems; i += blockDim.x)
         {
             const T val = use_shmem ? shmem[i] : input[bidx * n_elems + i];
-            float_packed_t diff = cuda_cast<float_packed_t>(val) - s_mean;
+            float_packed_t diff = cuda_cast<float_packed_t>(val); // - s_mean;
             local_var_sum += cuda_sum<float>(diff * diff);
         }
         variance = blockReduceSum(local_var_sum);

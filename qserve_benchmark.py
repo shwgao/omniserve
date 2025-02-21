@@ -4,17 +4,22 @@
 #   author={Lin*, Yujun and Tang*, Haotian and Yang*, Shang and Zhang, Zhekai and Xiao, Guangxuan and Gan, Chuang and Han, Song},
 #   year={2024}
 # }
+# @article{yang2025lserve,
+#   title={LServe: Efficient Long-sequence LLM Serving with Unified Sparse Attention},
+#   author={Yang*, Shang and Guo*, Junxian and Tang, Haotian and Hu, Qinghao and Xiao, Guangxuan and Tang, Jiaming and Lin, Yujun and Liu, Zhijian and Lu, Yao and Han, Song},
+#   year={2025}
+# }
 
 import argparse
 import time
 import gc
 import torch
 
-import qserve.utils.constants
-from qserve import EngineArgs, LLMEngine, SamplingParams
-from qserve.config import ProfilingConfig
+import omniserve.utils.constants
+from omniserve import EngineArgs, LLMEngine, SamplingParams
+from omniserve.config import ProfilingConfig
 
-max_seq_len = qserve.utils.constants.max_seq_len
+max_seq_len = omniserve.utils.constants.max_seq_len
 
 import os
 
@@ -32,7 +37,7 @@ def process_requests(
             str(b),
             prompt=None,
             profiling_config=profiling_config,
-            sampling_params=SamplingParams(top_p=0.95, top_k=40, temperature=0.7),
+            sampling_params=SamplingParams(top_p=0.5, top_k=1, temperature=0),
         )
 
     if engine.ifb_mode == False:

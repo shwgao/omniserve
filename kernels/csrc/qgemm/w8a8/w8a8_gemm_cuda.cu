@@ -5,6 +5,11 @@
 //   journal={arXiv preprint arXiv:2405.04532},
 //   year={2024}
 // }
+// @article{yang2025lserve,
+//   title={LServe: Efficient Long-sequence LLM Serving with Unified Sparse Attention},
+//   author={Yang*, Shang and Guo*, Junxian and Tang, Haotian and Hu, Qinghao and Xiao, Guangxuan and Tang, Jiaming and Lin, Yujun and Liu, Zhijian and Lu, Yao and Han, Song},
+//   year={2025}
+// }
 
 #include "w8a8_gemm_cuda.h"
 #include <cuda_fp16.h>
@@ -36,7 +41,7 @@
     printf("This kernel requires %d Bytes of shared memory, which exceeds "      \
            "device limit.\n",                                                    \
            kSmemByteSize);                                                       \
-    return ;                                                           \
+    return ;                                                                     \
   }                                                                              \
   int num_blocks_m = (num_out_feats + CTA_M - 1) / CTA_M;                        \
   int num_blocks_n = num_out_channels / CTA_N / 1;                               \
@@ -573,6 +578,7 @@ void w8a8_gemm_forward_cuda(torch::Tensor _in_feats,
     constexpr int STAGES = 6;
     KERNEL_LAUNCH_CODE
   }
+  
   return ;
 }
 
